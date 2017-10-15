@@ -1,0 +1,72 @@
+/*AUTORES: Lucía Rivas Molina */
+/*		   Daniel Santo-Tomás */
+/*Grupo 1201                  */
+/*Consultas SQL Práctica 1    */
+
+
+/*CONSULTA1: 1. Dado un título, ¿Cuántas ediciones tiene? ¿En cuántos idiomas?*/
+select count(Id) as NumEdiciones, count(distinct(Idioma)) as NumIdiomas from Edicion, Libro
+	where Libro.Titulo_original = '' AND Edicion.Id = Libro.Id_libro;
+	
+	
+/*CONSULTA2: 2. ¿Cuántos libros se han vendido de un autor dado?*/
+select count(Num_venta) as LibrosVendidos from Ventas, Edicion, Libro, Relacion_AL, Autor
+	where Autor.Nombre = '' AND Relacion_AL.Autor = Autor.Id_autor AND Libro.Id_libro = Relacion_AL.Libro
+	      AND Edicion.Id = Libro.Id_libro AND Ventas.Edicion = Edicion.ISBN;
+		  
+		  
+/*CONSULTA3: 3. ¿Cuántos libros de un autor dado se han vendido en oferta?*/
+select count(Num_venta) as LibrosVendidos from Ventas, Edicion, Libro, Relacion_AL, Autor
+	where Autor.Nombre = '' AND Relacion_AL.Autor = Autor.Id_autor AND Libro.Id_libro = Relacion_AL.Libro
+	      AND Edicion.Id = Libro.Id_libro AND Ventas.Edicion = Edicion.ISBN 
+		  AND Ventas.Oferta IS NOT NULL;  
+
+
+/*CONSULTA4: 4. ¿Cuánto dinero se ha ganado vendiendo libros de un editor dado?*/		  
+select sum(Precio_final) as DineroGanado from Ventas, Edicion 
+	where Edicion.Editorial = '' AND Ventas.Edicion = Edicion.ISBN;
+	
+	
+/*CONSULTA5: 5. ¿Cuántos libros han comprado los usuarios fidelizados?*/
+select count(Num_Venta) as NumLibrosVendidos from Ventas
+	where Fidelizado IS NOT NULL;
+	
+
+/*CONSULTA6: 6. ¿Cuántos usuarios fidelizados han comprado libros en inglés?*/
+select count(Num_Venta) as LibrosIngles from Ventas, Edicion
+	where Edicion.Idioma = 'Ingles' AND Ventas.Edicion = Edicion.ISBN AND 
+		  Fidelizado NOT IN(
+			select Fidelizado from Ventas
+				where Fidelizado = NULL);
+	
+
+/*CONSULTA7: 7. ¿Cuánto dinero se ha ganado vendiendo libros en Francés?*/
+select sum(Precio_final) as GananciasFrances from Ventas, Edicion
+	where Edicion.Idioma = 'Frances' AND Ventas.Edicion = Edicion.ISBN;
+
+
+/*CONSULTA8: 8. ¿En que días hubo ofertas de libros de la editorial Adelpi?*/
+select distinct Num_oferta as Numero, Fecha_inicio as Desde, Fecha_fin as Hasta from Oferta, Edicion, Libro
+	where Edicion.Editorial = 'Adelpi' AND Libro.Id_libro = Edicion.Id AND Oferta.Libro = Libro.Id_libro
+		order by Fecha_inicio DESC;
+
+
+/*CONSULTA9: 9. ¿Qué usuarios fidelizados no han comprado nunca libros de bolsillo? 	
+select distinct(Id_Fidelizado) from Fidelizados
+	where Id_fidelizado NOT IN(
+		select Id_fidelizado from Fidelizados, Edicion, Ventas
+			where Edicion.Tamaño = 'Bolsillo' AND Ventas.Edicion = Edicion.ISBN AND Fidelizados.Id_fidelizado = Ventas.Fidelizado)
+	order by Id_Fidelizado;
+			
+			
+
+
+
+
+
+
+
+
+
+
+	
