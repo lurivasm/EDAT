@@ -1,0 +1,39 @@
+﻿CREATE TABLE isbn_precios_temp (
+	ISBN	text,
+	Precio	money 
+);
+
+CREATE TABLE ventas_temp(
+	num	int,
+	fid	int ,
+	ISBN	text,
+	fecha	date 
+);
+
+CREATE TABLE us_temp(
+	id	int ,
+	nick	text ,
+	nombre	text,
+	joind	timestamp,
+	tarj	text,
+	exp	date
+);
+
+CREATE TABLE libros_temp(
+	Autor	text,
+	Titulo	text,
+	Formato	text,
+	NumP	text,
+	Edit	text,
+	Fecha	text,
+	Idioma	text,
+	ISBN	text
+);
+
+COPY libros_temp from '/home/alumnos/e359558/Desktop/LIBROS_FINAL.txt' 
+	WITH CSV HEADER DELIMITER '	'  ENCODING 'ISO-8859-1'
+	
+	mikel,ojo con stmt libera MIKEL JODER LIBERAAAA AU AU AU
+
+COPY isbn_precios_temp from '/home/alumnos/e359558/Desktop/' 
+	WITH CSV HEADER DELIMITER '	'  ENCODING 'ISO-8859-1'

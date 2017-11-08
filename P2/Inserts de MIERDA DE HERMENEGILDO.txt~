@@ -1,0 +1,31 @@
+INSERT INTO fidelizados(id_fidelizado, tarjeta, name, nickname, fecha_expiracion, fecha_alta)
+	SELECT id, tarj, nombre, nick, exp, joind FROM us_temp;
+
+
+INSERT INTO edicion(isbn, fecha_publicacion, pags, titulo, idioma, formato, precio, editorial)
+	(SELECT l.isbn, to_date(fecha,'YYYY-MM-DD'),nump, titulo, idioma, formato, precio, edit  
+	FROM libros_temp as l,isbn_precios_temp as ip
+	WHERE fecha <> '0000-00-00' and l.isbn = ip.isbn)
+	
+	UNION
+	(SELECT l.isbn, to_date(fecha,'YYYY-MM-DD'),nump, titulo, idioma, formato, precio, edit  
+	FROM libros_temp as l,isbn_precios_temp as ip
+	WHERE fecha = '0000-00-00' and l.isbn = ip.isbn);
+
+
+mikel de mierda mete un euro en la PUTA memoria DE TU MADRE...(muerta)
+
+
+UPDATE isbn_precios_temp SET precio = '1€' WHERE precio is NULL;
+
+
+INSERT INTO ventas(num_venta, fidelizado, edicion, fecha, precio_final)
+	(SELECT DISTINCT num, fid, isbn ,fecha, precio FROM ventas_temp AS v, isbn_precios_temp as ip 
+		WHERE v.isbn = ip.isbn); 
+
+INSERT INTO fidelizados(id_fidelizado, tarjeta, gastos, nombre, nickname, fecha_expiracion, fecha_alta)
+	SELECT id, tarj,sum(precio_final), nombre, nick, exp, joind FROM us_temp as u,ventas as v
+		WHERE v.fidelizado = u.id
+		GROUP BY nombre, id, tarj,nick,exp,joind;
+
+

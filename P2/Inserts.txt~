@@ -1,0 +1,8 @@
+INSERT INTO fidelizados(id_fidelizado, tarjeta, name, nickname, fecha_expiracion, fecha_alta)
+	SELECT id, tarj, nombre, nick, exp, joind FROM us_temp;
+
+INSERT INTO ventas(num_venta, fidelizado, edicion, fecha)
+	SELECT DISTINCT num, fid, isbn ,fecha FROM ventas_temp;
+
+INSERT INTO edicion(isbn, titulo, idioma, editorial, fecha_public, pags, formato)
+	SELECT ISBN
