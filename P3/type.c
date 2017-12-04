@@ -27,7 +27,7 @@ void print_value(FILE* f, type_t type, void* value) {
             fprintf(f, "%s", (char*) value);
             break;
         case LLNG:
-            fprintf(f, "%f", *((long*) value));
+            fprintf(f, "%ld", *((long*) value));
             break;
         case DBL:
             fprintf(f, "%lf", *((double*) value));
@@ -78,7 +78,7 @@ void* value_parse(type_t type, char* literal) {
             break;
         case LLNG:
             value = malloc(sizeof(long));
-            *((long*) value) = atol(literal)
+            *((long*) value) = atol(literal);
             break;
         case DBL:
             value = malloc(sizeof(double));

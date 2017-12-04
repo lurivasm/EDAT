@@ -6,9 +6,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
-#include "../type/type.h"
-#include "index.h"
-#include "record.h"
+#include "type.h"
 
 typedef struct table_ table_t;
 
@@ -52,7 +50,7 @@ long table_read_record(table_t* table, long pos);
   pointer: if the column is an INT, the function will return a pointer
   to it).. Returns NULL if there is no record in memory or if the
   column doesn't exist.*/
-void *table_column_get(table_t* table, int col);
+void * table_column_get(table_t* table, int col);
 
 /*Inserts a record in the last available position of the table. Note
    that all the values are cast to void *, and that there is no

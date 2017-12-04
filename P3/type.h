@@ -7,10 +7,10 @@
 #include <stdio.h>
 
 typedef enum {
-    INT, /*integer*/
+    INT = 1, /*integer*/
     STR, /*string*/
     LLNG, /*long*/
-    DBL, /*double*/
+    DBL /*double*/
 } type_t;
 
 /* length in bytes of the value */
