@@ -9,6 +9,8 @@ struct table_ {
     int ncols;           /*Numero de columnas*/
     type_t *types;       /*Array de tipos en orden a escribir*/
     long pos;            /*Posición inicial para escribir*/
+    char *path;
+    void **leidos;
 };
 
 
@@ -33,7 +35,7 @@ table_t* table_open(char* path) {
     t = (table_t*)malloc(sizeof(table_t));
     if(!t) return NULL;
 
-    t->ficht = fopen(path,"r");
+    t->ficht = fopen(path,"r+b");
     if(!t->ficht){
       free(t);
       return NULL;
@@ -51,6 +53,12 @@ table_t* table_open(char* path) {
     fread(t->types, sizeof(type_t), t->ncols, t->ficht);
     t->pos = ftell(t->ficht);
 
+    t->path = (char*)malloc(sizeof(char)*strlen(path));
+    if(!t->path) {
+      table_close(t);
+    }
+    strcpy(t->path, path);
+
     return t;
 }
 
@@ -60,6 +68,7 @@ void table_close(table_t* table) {
 
   fclose(table->ficht);
   free(table->types);
+  free(table->path);
   free(table);
   return;
 }
@@ -70,7 +79,10 @@ int table_ncols(table_t* table) {
     return table->ncols;
 }
 
-
+char* table_data_path(table_t* table){
+  if(!table) return NULL;
+  return table->path;
+}
 type_t* table_types(table_t* table) {
     if(!table) return NULL;
     return table->types;
@@ -101,34 +113,33 @@ long table_read_record(table_t* table, long pos) {
     int i, tamanio;
     type_t* tipos = table_types(table);
     if(!tipos) return -1L;
-
-    void **values = (void**)malloc(sizeof(void*)*table_ncols(table));
-    if(!values) return -1L;
+    if(table->leidos) {
+      for(i = 0; i < table_ncols(table); i++){
+        if(tipos[i] == STR) free(table->leidos[i]);
+      }
+      free(table->leidos);
+    }
+    table->leidos = (void**)malloc(sizeof(void*)*table_ncols(table));
+    if(!table->leidos) return -1L;
 
     fseek(table->ficht, pos, SEEK_SET);
 
     for(i = 0; i < table_ncols(table); i++){
       /*Si es una cadena de caracteres, leemos primero el tmaño*/
       if (tipos[i] == STR){
-        fread(tamanio, sizeof(int), 1, tabla->ficht);
-        values[i] = (char*)malloc(sizeof(char)*tamanio);
-        if(!(values[i])){
-          free(values);
+        fread(&tamanio, sizeof(int), 1, table->ficht);
+        table->leidos[i] = (char*)malloc(sizeof(char)*tamanio);
+        if(!(table->leidos[i])){
+          free(table->leidos);
           return NULL;
         }
-        fread(values[i], tamanio, 1, table->ficht);
-        continue;
+        fread(table->leidos[i], sizeof(char)*tamanio, 1, table->ficht);
       }
 
-      values[i] = (void*)malloc(sizeof(void)*sizeof(type_t));
-      if(!(values[i])){
-        free(values);
-        return -1L;
+      else {
+      fread(&table->leidos[i], value_length(tipos[i], 1), 1, table->ficht);
       }
-      fread(values[i], sizeof(type_t), 1, table->ficht);
     }
-    for(i = 0; i < table_ncols(table); i++) free(values[i]);
-    free(values);
 
     return ftell(table->ficht);
 }
@@ -143,7 +154,7 @@ void * table_column_get(table_t* table, int col){
 
     /*Vemos que tipo es la columna col*/
     tipo = table_types(table);
-    datos = (char*)malloc(sizeof(char));
+    datos = (char*)malloc(sizeof(char)*sizeof(type_t));
     if(!datos) return -1L;
 
     /*Nos posicionamos en la columna en la que nos encontremos*/
@@ -151,12 +162,12 @@ void * table_column_get(table_t* table, int col){
       /*Si es una cadena de caracteres, leemos primero el tamaño*/
       if (tipo[i] == STR){
         free(datos);
-        fread(tamanio, sizeof(int), 1, tabla->ficht);
+        fread(tamanio, sizeof(int), 1, table->ficht);
         datos = (char*)malloc(sizeof(char)*tamanio);
         if(!(datos)) return NULL;
 
-        fread(datos, tamanio, 1, table->ficht);
-        if(i == col) break;
+        fread(datos, sizeof(char)*tamanio, 1, table->ficht);
+        if(i == col - 1) break;
         free(datos);
         continue;
       }
@@ -171,20 +182,24 @@ void * table_column_get(table_t* table, int col){
 
 void table_insert_record(table_t* table, void** values) {
     if(!table || !values) return;
-    int i;
+    int i, tam;
     void **aux = values;
+    type_t *tipos = table_types(table);
+    if(!tipos) return;
 
     /*Posicionamos el ultimo lugar de la tabla*/
     if(table_last_pos(table) == -1L) return;
 
     /*Escribimos en el fichero*/
-    for(i = 0; i < table->ncols; i++){
+    for(i = 0; i < table_ncols(table); i++){
       /*En caso de que sea una cadena de caracteres escribimos primero su tamaño*/
-      if(table->types[i] == STR){
-        fwrite(value_length(STR, values[i]), sizeof(int), 1, table->ficht);
+      if(tipos[i] == STR){
+        tam = value_length(STR, values[i]);
+        fwrite(&tam, sizeof(int), 1, table->ficht);
         fwrite(values[i], value_length(STR, values[i]), 1, table->ficht);
-        continue;
       }
-      fwrite(values[i], value_length(table->types[i], values[i]), 1, table->ficht);
+      else {
+        fwrite(&(values[i]), value_length(tipos[i], values[i]), 1, table->ficht);
+      }
     }
 }
