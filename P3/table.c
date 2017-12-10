@@ -65,10 +65,19 @@ table_t* table_open(char* path) {
 
 void table_close(table_t* table) {
   if(!table) return;
+  int i;
+  type_t *tipos = table_types(table);
+  if(!tipos) return;
 
   fclose(table->ficht);
   free(table->types);
   free(table->path);
+  if(table->leidos) {
+    for(i = 0; i < table_ncols(table); i++){
+      if(tipos[i] == STR) free(table->leidos[i]);
+    }
+    free(table->leidos);
+  }
   free(table);
   return;
 }
@@ -83,6 +92,8 @@ char* table_data_path(table_t* table){
   if(!table) return NULL;
   return table->path;
 }
+
+
 type_t* table_types(table_t* table) {
     if(!table) return NULL;
     return table->types;
@@ -107,12 +118,15 @@ long table_last_pos(table_t* table) {
     return ftell(table->ficht);
 }
 
-/*Tomamos como origen el principio del fichero*/
+/*Tomamos como origen el principio del fichero y guardamos lo leido en la estructura*/
 long table_read_record(table_t* table, long pos) {
     if(!table || pos < 0 || pos > table_last_pos(table)) return -1L;
     int i, tamanio;
+
     type_t* tipos = table_types(table);
     if(!tipos) return -1L;
+
+    /*Si table->leidos tiene algo lo liberamos*/
     if(table->leidos) {
       for(i = 0; i < table_ncols(table); i++){
         if(tipos[i] == STR) free(table->leidos[i]);
@@ -137,46 +151,18 @@ long table_read_record(table_t* table, long pos) {
       }
 
       else {
-      fread(&table->leidos[i], value_length(tipos[i], 1), 1, table->ficht);
+      fread(&(table->leidos[i]), value_length(tipos[i], NULL), 1, table->ficht);
       }
     }
 
     return ftell(table->ficht);
 }
 
-
+/*Devolvemos un puntero de lo que haya en table->leidos*/
 void * table_column_get(table_t* table, int col){
-    if(!table || col <= 0 || col > table_ncols(table)) return NULL;
-    char *datos;
-    void *ret;
-    type_t *tipo;
-    int i, tamanio;
+    if(!table || col <= 0 || col > table_ncols(table) || !table->leidos) return NULL;
 
-    /*Vemos que tipo es la columna col*/
-    tipo = table_types(table);
-    datos = (char*)malloc(sizeof(char)*sizeof(type_t));
-    if(!datos) return -1L;
-
-    /*Nos posicionamos en la columna en la que nos encontremos*/
-    for(i = 0; i < col; i++){
-      /*Si es una cadena de caracteres, leemos primero el tamaño*/
-      if (tipo[i] == STR){
-        free(datos);
-        fread(tamanio, sizeof(int), 1, table->ficht);
-        datos = (char*)malloc(sizeof(char)*tamanio);
-        if(!(datos)) return NULL;
-
-        fread(datos, sizeof(char)*tamanio, 1, table->ficht);
-        if(i == col - 1) break;
-        free(datos);
-        continue;
-      }
-      fread(datos, sizeof(char)*sizeof(type_t), 1, table->ficht);
-    }
-    ret = value_parse(tipo[i], datos);
-    free(datos);
-    free(tipo);
-    return ret;
+    return  table->leidos[col-1];
 }
 
 
