@@ -1,0 +1,34 @@
+/*Práctica 2: Lucía Rivas Molina y Daniel Santo-Tomás López*/
+/*Tablas temporales utilizadas para copiar los datos de los txt a pgadmin*/
+
+CREATE TABLE isbn_precios_temp (
+	ISBN	text,
+	Precio	money 
+);
+
+CREATE TABLE ventas_temp(
+	num	int,
+	fid	int ,
+	ISBN	text,
+	fecha	date 
+);
+
+CREATE TABLE us_temp(
+	id	int ,
+	nick	text ,
+	nombre	text,
+	joind	timestamp,
+	tarj	text,
+	exp	date
+);
+
+CREATE TABLE libros_temp(
+	Autor	text,
+	Titulo	text,
+	Formato	text,
+	NumP	text,
+	Edit	text,
+	Fecha	text,
+	Idioma	text,
+	ISBN	text
+);

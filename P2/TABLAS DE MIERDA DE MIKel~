@@ -33,7 +33,4 @@ CREATE TABLE libros_temp(
 COPY libros_temp from '/home/alumnos/e359558/Desktop/LIBROS_FINAL.txt' 
 	WITH CSV HEADER DELIMITER '	'  ENCODING 'ISO-8859-1'
 	
-	mikel,ojo con stmt libera MIKEL JODER LIBERAAAA AU AU AU
-
-COPY isbn_precios_temp from '/home/alumnos/e359558/Desktop/' 
-	WITH CSV HEADER DELIMITER '	'  ENCODING 'ISO-8859-1'
+	mikel,ojo con stmt libera MIKEL JODER LIBERAAAA

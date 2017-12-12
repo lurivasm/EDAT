@@ -1,0 +1,16 @@
+/*Inserción de los datos proporcionados en clase en las tablas temporales*/
+/*Hecho por Lucía Rivas y Daniel Santo-Tomás*/
+/*Grupo 1202*/
+
+
+COPY libros_temp from '/home/alumnos/e359558/Desktop/LIBROS_FINAL.txt' 
+	WITH CSV HEADER DELIMITER '	'  ENCODING 'ISO-8859-1'
+
+COPY isbn_precios_temp from '/home/alumnos/e359558/Desktop/isbns_precios.txt' 
+	WITH CSV HEADER DELIMITER '	'  ENCODING 'ISO-8859-1'
+
+COPY ventas_temp from '/home/alumnos/e359558/Desktop/ventas.txt' 
+	WITH CSV HEADER DELIMITER '	'  ENCODING 'ISO-8859-1'
+
+COPY us_temp from '/home/alumnos/e359558/Desktop/usuarios.txt' 
+	WITH CSV HEADER DELIMITER '	'  ENCODING 'ISO-8859-1'
