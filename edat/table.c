@@ -9,6 +9,7 @@ struct table_ {
     int ncols;           /*Numero de columnas*/
     type_t *types;       /*Array de tipos en orden a escribir*/
     long pos;            /*Posición inicial para escribir*/
+    long ultimo;         /*Posicion del último record escrito*/
     char *path;
     void **leidos;
 };
@@ -59,6 +60,7 @@ table_t* table_open(char* path) {
     }
     strcpy(t->path, path);
     t->leidos = NULL;
+
 
     return t;
 }
@@ -188,4 +190,5 @@ void table_insert_record(table_t* table, void** values) {
         fwrite(&(values[i]), value_length(tipos[i], values[i]), 1, table->ficht);
       }
     }
+
 }

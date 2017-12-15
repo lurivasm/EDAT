@@ -1,5 +1,6 @@
 
 #include "table.h"
+#include "list.h"
 #include <sql.h>
 #include <sqlext.h>
 #include "odbc.h"
@@ -12,9 +13,11 @@ int main(int argc, char **argv){
   SQLCHAR isbnSQL[200];
 
   table_t *score;
-  int puntos;
+  List *lista;
+  int puntos, i;
   char titulo[512], query[512], isbn[200];
   void **valores;
+  long pos, aux;
 
   /*Comprobamos los parámetros de entrada*/
   if(argc < 3){
@@ -23,9 +26,8 @@ int main(int argc, char **argv){
     return EXIT_FAILURE;
   }
   puntos = atoi(argv[1]);
-  if(puntos > 100 || puntos < 0){
-    printf("Score incorrecto\n");
-    return EXIT_FAILURE;
+  if(puntos > 100){
+    printf("Error en los puntos, no pueden superar 100\n");
   }
   strcpy(titulo, argv[2]);
 
@@ -39,7 +41,6 @@ int main(int argc, char **argv){
 
   /* Allocate a statement handle */
   SQLAllocHandle(SQL_HANDLE_STMT, dbc, &stmt);
-
 
 
   /*Comprobamos si existe el libro y guardamos su isbn*/
@@ -66,10 +67,32 @@ int main(int argc, char **argv){
     return EXIT_FAILURE;
   }
 
-  /*Metemos los valores dados*/
+  /*Inicializamos la lista*/
+  lista = list_ini();
+  if(!lista){
+    table_close(score);
+    printf("Error en list_ini\n");
+    SQLFreeHandle(SQL_HANDLE_STMT, stmt);
+    estado = odbc_disconnect(env, dbc);
+    return EXIT_FAILURE;
+  }
+
+  /*Metemos los valores de la tabla en una lista ordenada*/
+  lista = list_tableread(lista, score);
+  if(!lista){
+    table_close(score);
+    list_free(lista);
+    SQLFreeHandle(SQL_HANDLE_STMT, stmt);
+    estado = odbc_disconnect(env, dbc);
+    return EXIT_FAILURE;
+  }
+
+
+  /*Metemos los valores dados en la tabla*/
   valores = (void**)malloc(sizeof(void*)*table_ncols(score));
   if(!valores){
     table_close(score);
+    list_free(lista);
     SQLFreeHandle(SQL_HANDLE_STMT, stmt);
     estado = odbc_disconnect(env, dbc);
     return EXIT_FAILURE;
@@ -78,13 +101,22 @@ int main(int argc, char **argv){
   valores[1] = titulo;
   valores[2] = isbn;
 
-  table_read_record(score,table_last_pos(score));
-  valores[3] = table_column_get(score,4) + 1;
+  pos = table_last_pos(score);
+  table_read_record(score, table_last_pos(score));
+  valores[3] = table_column_get(score, 4) + 1;
 
 
 
   table_insert_record(score, valores);
-
+  lista = list_insertInOrder(lista, valores[0], pos);
+  if(!lista){
+    table_close(score);
+    free(valores);
+    list_free(lista);
+    SQLFreeHandle(SQL_HANDLE_STMT, stmt);
+    estado = odbc_disconnect(env, dbc);
+    return EXIT_FAILURE;
+  }
   /*Cerramos la tabla y liberamos valores*/
   table_close(score);
   free(valores);

@@ -1,28 +1,29 @@
 #include "list.h"
 #include "type.h"
+#include "table.h"
 
 typedef struct _Nodo {
-    char *isbn, *titulo;     /*ISBN y Título de un libro*/
-    int id, punt;            /*Id y puntuación de un libro*/
-    Nodo *next;      /*Puntero a la siguiente fila, nunca reserva memoria*/
-} Nodo;
+    int punt;            /*Puntuación de un libro*/
+    long pos;            /*Posición de memoria en el fichero*/
+    Nodo *next;          /*Puntero a la siguiente fila, nunca reserva memoria*/
+};
 
 struct _List {
     Nodo *node;         /*Puntero al primer nodo de la lista*/
     int nfilas;         /*Número de filas*/
-    int ncols;          /*Número de columnas de cada fila. Por defecto, son 4*/
+
 };
 
-
-Nodo* nodo_ini(){
+/*En todo momento suponemos que const void **elem es en todo momento un puntero a score, titulo, isbn, id en orden*/
+Nodo* nodo_ini(int punt, long pos){
     Nodo *n;
     n = (Nodo*)malloc(sizeof(Nodo));
     if(!n) return NULL;
 
-    n->isbn = NULL;
-    n->titulo = NULL;
+    /*Metemos los datos en el nodo*/
+    n->punt = punt;
+    n->pos = pos;
     n->next = NULL;
-
     return n;
 }
 
@@ -35,17 +36,17 @@ List* list_ini(){
     int i;
 
     l->node = NULL;
-    l->ncols = 4;
     l->nfilas = 0;
 
     return l;
 }
 
+
 void nodo_free(Nodo *n){
   if(!n) return;
-  free(n->titulo);
-  free(n->isbn);
+  free(n);
 }
+
 
 void list_free(List* l){
     Nodo *n;
@@ -65,21 +66,9 @@ void list_free(List* l){
 }
 
 
-int list_ncols(List *l){
-  if(!l) return -1;
-  return l->ncols;
-}
-
-
 int list_nfilas(List *l){
   if(!l) return -1;
   return l->nfilas;
-}
-
-
-type_t *list_tipos(List *l){
-  if(!l) return NULL;
-  return l->tipos;
 }
 
 
@@ -90,120 +79,83 @@ Bool list_isEmpty(const List* l){
 }
 
 
-List* list_insertInOrder(List *l, const void **elem){
-    if(!l || !elem) return NULL;
+
+List* list_insertInOrder(List *l, int punt, long pos){
+    if(!l || pos == -1L || punt < 0) return NULL;
     int i;
 
     Nodo *n, *aux;
-    n = nodo_ini();
+    n = nodo_ini(punt, pos);
     if(!n) return NULL;
-
-    /*Metemos los datos en el nodo*/
-  /*  n->data = (void**)malloc(sizeof(void*)*list_ncols(l));
-    if(!n->data) return NULL;
-    for(i = 0; i < list_ncols(l); i++){
-      if(l->tipos[i] == STR){
-        n->data[i] = (char*)malloc(sizeof(char)*(strlen(elem[i]) + 1));
-        strcpy(n->data[i], elem[i]);
-      }
-      else{ n->data[i] = elem[i]; }
-    }*/
 
     if(list_isEmpty(l) == TRUE){
         l->node = n;
+        l->nfilas++;
         return l;
     }
 
-    if(l->cmp_element_function(elem, l->node->data) == -1){  // Si elem es menor que el primer dato
+    /*Si el primero tiene menor o igual score que el nuevo los cambiamos*/
+    if((l->node)->punt <= n->punt){
         n->next = l->node;
         l->node = n;
+        l->nfilas++;
         return l;
     }
 
-   //Resto de casos
-    for(aux = l->node; aux->next!=NULL && (l->cmp_element_function(aux->next->data, elem)== -1); aux = aux->next);
+   /*Resto de casos, buscamos hasta que el score de n sea mayor que el siguiente y lo ponemos el primero*/
+    for(aux = l->node; aux->next != NULL; aux = aux->next){
+      if((aux->next)->punt <= n->punt) break;
+    }
     n->next = aux->next;
     aux->next = n;
     l->nfilas ++;
     return l;
 }
 
-void * list_extractFirst(List* l){
-    Nodo *aux, *aux2;
-    void *copia;
-    if(!l) return NULL;
-    if(list_isEmpty(l)== TRUE) return NULL;
 
+long node_pos(const List * l, int i){
+  if(!l || i < 0 || list_isEmpty(l)== TRUE) return -1L;
+  Nodo *aux;
+  int cont;
 
-    if(l->node->next == NULL){     //Si sÃ³lo hay un elemento en la lista
-        aux = l->node;
-        l->node = NULL;
-        copia = l->copy_element_function(aux->data);
-        if (!copia) return NULL;
+  for(cont = 0, aux = l->node; cont < i; cont++, aux = aux->next){
+      if(aux == NULL) return -1L;  /*En caso de que no haya suficientes elementos en la lista*/
+  }
 
-        l->destroy_element_function(aux->data);
-        free(aux);
-        return copia;
-    }
-
-    aux = l->node->next;
-    aux2 = l->node;
-    l->node = aux;
-
-    copia = l->copy_element_function(aux2->data);
-    if (!copia) return NULL;
-
-    l->destroy_element_function(aux2->data);
-    free(aux2);
-
-    return copia;
-}
-
-void * list_extractLast(List* l){
-    Nodo *aux, *aux2;
-    void * copia;
-    if(!l) return NULL;
-    if(list_isEmpty(l)== TRUE) return NULL;
-
-    if(l->node->next == NULL){     //Si sÃ³lo hay un elemento en la lista
-        aux = l->node;
-        l->node = NULL;
-        copia = l->copy_element_function(aux->data);
-        if (!copia) return NULL;
-
-        l->destroy_element_function(aux->data);
-        free(aux);
-        return copia;
-    }
-
-    for(aux = l->node; aux->next->next != NULL; aux = aux->next);
-    aux2 = aux->next;
-    aux->next = NULL;
-
-    copia = l->copy_element_function(aux2->data);
-    if (!copia) return NULL;
-
-    l->destroy_element_function(aux2->data);
-    free(aux2);
-
-    return copia;
+  return aux->pos;
 }
 
 
-const void* list_get(const List* l, int i){
-    if(!l) return NULL;
-    if(list_isEmpty(l)== TRUE) return NULL;
-    Nodo *aux;
-    int cont;
+int node_punt(const List * l, int i){
+  if(!l || i < 0 || list_isEmpty(l)== TRUE) return -1L;
+  Nodo *aux;
+  int cont;
 
-    for(cont = 1, aux = l->node; cont <= i; cont++, aux = aux->next){
-        if(aux == NULL) return NULL;  //En caso de que no haya suficientes elementos en la lista
-    }
+  for(cont = 0, aux = l->node; cont < i; cont++, aux = aux->next){
+      if(aux == NULL) return -1L;  /*En caso de que no haya suficientes elementos en la lista*/
+  }
 
-    return aux->data;
+  return aux->punt;
 }
+
 
 int list_size(const List* l){
     if(!l) return -1;
-    return list->num;
+    return l->nfilas;
+}
+
+
+List *list_tableread(List *l, table_t *t){
+  if(!l || !t) return NULL;
+  long pos, aux;
+
+  pos = table_first_pos(t);
+  while(pos != table_last_pos(t)){
+    aux = table_read_record(t, pos);
+    l = list_insertInOrder(l, table_column_get(t, 1), pos);
+    if(!l)  return NULL;
+
+    pos = aux;
+  }
+  return l;
 }
