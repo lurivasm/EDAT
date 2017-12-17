@@ -14,7 +14,7 @@ struct _List {
 
 };
 
-/*En todo momento suponemos que const void **elem es en todo momento un puntero a score, titulo, isbn, id en orden*/
+
 Nodo* nodo_ini(int punt, long pos){
     Nodo *n;
     n = (Nodo*)malloc(sizeof(Nodo));

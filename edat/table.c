@@ -9,7 +9,6 @@ struct table_ {
     int ncols;           /*Numero de columnas*/
     type_t *types;       /*Array de tipos en orden a escribir*/
     long pos;            /*Posición inicial para escribir*/
-    long ultimo;         /*Posicion del último record escrito*/
     char *path;
     void **leidos;
 };
