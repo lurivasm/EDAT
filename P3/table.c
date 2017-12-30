@@ -53,11 +53,13 @@ table_t* table_open(char* path) {
     fread(t->types, sizeof(type_t), t->ncols, t->ficht);
     t->pos = ftell(t->ficht);
 
-    t->path = (char*)malloc(sizeof(char)*strlen(path));
+    t->path = (char*)malloc(sizeof(char)*(strlen(path)+1));
     if(!t->path) {
       table_close(t);
     }
     strcpy(t->path, path);
+    t->leidos = NULL;
+
 
     return t;
 }
@@ -66,18 +68,17 @@ table_t* table_open(char* path) {
 void table_close(table_t* table) {
   if(!table) return;
   int i;
-  type_t *tipos = table_types(table);
-  if(!tipos) return;
 
-  fclose(table->ficht);
-  free(table->types);
-  free(table->path);
+
   if(table->leidos) {
     for(i = 0; i < table_ncols(table); i++){
-      if(tipos[i] == STR) free(table->leidos[i]);
+      if(table->types[i] == STR) free(table->leidos[i]);
     }
     free(table->leidos);
   }
+  free(table->path);
+  free(table->types);
+  fclose(table->ficht);
   free(table);
   return;
 }
@@ -188,4 +189,5 @@ void table_insert_record(table_t* table, void** values) {
         fwrite(&(values[i]), value_length(tipos[i], values[i]), 1, table->ficht);
       }
     }
+
 }

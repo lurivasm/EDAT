@@ -58,4 +58,6 @@ void * table_column_get(table_t* table, int col);
    to store... why?*/
 void table_insert_record(table_t* table, void** values);
 
+
+
 #endif

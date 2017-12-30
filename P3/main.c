@@ -10,7 +10,7 @@ int main(void){
   void **values;
   char *nombre;
   int a, b;
-  long pos;
+  long pos, aux;
 
   int ncols = 3;
   tipos = (type_t*)malloc(sizeof(type_t)*ncols);
@@ -31,24 +31,22 @@ int main(void){
 
   values = (void**)malloc(sizeof(void*)*ncols);
   if(!values){
-    table_close(t);
     free(tipos);
+    table_close(t);
     printf("Error en values\n");
     return -1;
   }
   nombre = (char*)malloc(sizeof(char)*(strlen("Pato")+1));
   if(!(nombre)){
     free(values);
-    table_close(t);
     free(tipos);
+    table_close(t);
     printf("Error en values[0]\n");
     return -1;
   }
   strcpy(nombre, "Pato");
   values[0] = nombre;
-
   values[1] = 1;
-
   values[2] = 2;
 
   printf("Insertando: %s %d %d", values[0], values[1], values[2]);
@@ -60,8 +58,8 @@ int main(void){
   nombre = (char*)malloc(sizeof(char)*(strlen("Pedro")+1));
   if(!(nombre)){
     free(values);
-    table_close(t);
     free(tipos);
+    table_close(t);
     printf("Error en values[0]\n");
     return -1;
   }
@@ -75,21 +73,50 @@ int main(void){
   table_insert_record(t, values);
 
   free(nombre);
-  free(values);
+  free(tipos);
   table_close(t);
 
   t = table_open("prueba.dat");
-  if(!t) return -1;
+  if(!t) {
+    free(values);
+    return -1;
+  }
 
-  pos = table_read_record(t, table_first_pos(t));
-
-  table_read_record(t, pos);
+  /*Leemos la primera posición*/
+  pos = table_first_pos(t);
+  if(pos == -1L){
+    free(values);
+    table_close(t);
+    return -1;
+  }
+  aux = table_read_record(t, pos);
+  if(aux == -1L){
+    free(values);
+    table_close(t);
+    return -1;
+  }
 
   values[0] = table_column_get(t, 1);
   values[1] = table_column_get(t, 2);
   values[2] = table_column_get(t, 3);
   printf("\nEl resultado es: %s %d %d", values[0], values[1], values[2]);
 
+  /*Leemos la siguiente posición de memoria*/
+  pos = aux;
+  aux = table_read_record(t, pos);
+  if(aux == -1L){
+    free(values);
+    table_close(t);
+    return -1;
+  }
+
+  values[0] = table_column_get(t, 1);
+  values[1] = table_column_get(t, 2);
+  values[2] = table_column_get(t, 3);
+  printf("\nEl resultado es: %s %d %d", values[0], values[1], values[2]);
+
+  free(values);
   table_close(t);
+
   return 0;
 }
